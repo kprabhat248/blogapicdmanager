@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 class blogmodel(BaseModel):
     title:str
@@ -13,3 +13,16 @@ class updateblogmodel(BaseModel):
     content:str=None
     author:str=None
     tags:list=None
+
+class UserRegisterModel(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+class UserLoginModel(BaseModel):
+    username: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
