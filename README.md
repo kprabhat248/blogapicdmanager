@@ -2,7 +2,7 @@
 
 ## Introduction
 This document outlines the steps to implement a RESTful API for managing blog posts using FastAPI, Python MongoDB client, and MongoDB as the database. The API will support CRUD operations (Create, Read, Update, Delete) for managing blog posts.
-
+![image](https://github.com/kprabhat248/blogapicdmanager/assets/67147805/96e71632-cc4a-45aa-b3e9-c6cdd50bc428)
 ## Technologies Used
 - FastAPI: A modern, fast (high-performance) web framework for building APIs with Python.
 - MongoDB: A popular NoSQL database for storing unstructured data.
@@ -56,4 +56,4 @@ db = client["blog_database"]
 collection = db["blog_collection"]
 
 ### Makesure generate the virtual environment and then import dependencies
-![image](https://github.com/kprabhat248/blogapicdmanager/assets/67147805/96e71632-cc4a-45aa-b3e9-c6cdd50bc428)
+
