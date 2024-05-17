@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import FastAPI, Depends, HTTPException, APIRouter
 from models.blog import blogmodel, updateblogmodel
 from models.blog import UserRegisterModel, UserLoginModel, Token
-from config.config import blogs_connection
+from config.config import blogs_connection, users_connection
 from serializers.serializers import decodeblog, decodeblogs
 from bson import ObjectId
 import datetime
 import httpx
 from config.jwt import create_access_token, get_password_hash, verify_password, verify_token, oauth2_scheme
 
+app = FastAPI()
 blog_root = APIRouter()
 
 ### User registration
@@ -19,19 +20,19 @@ async def register(user: UserRegisterModel):
         "hashed_password": get_password_hash(user.password),
     }
 
+    existing_user = users_connection.find_one({"username": user.username})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+
+    users_connection.insert_one(user_data)
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
 ### User login
 @blog_root.post("/login", response_model=Token)
 async def login(user: UserLoginModel):
-    # Retrieve user from the database by username
-    # For demonstration purposes, let's assume we have retrieved the user data
-    db_user = {
-        "username": user.username,
-        "hashed_password": get_password_hash(user.password),  # Replace with the stored hash from the database
-    }
-    if not verify_password(user.password, db_user["hashed_password"]):
+    db_user = users_connection.find_one({"username": user.username})
+    if not db_user or not verify_password(user.password, db_user["hashed_password"]):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
@@ -39,10 +40,10 @@ async def login(user: UserLoginModel):
 ### Dependency to get the current user
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     username = verify_token(token)
-    # Retrieve user from the database by username
-    # For demonstration purposes, let's assume the user exists
-    user = {"username": username}
-    return user
+    user = users_connection.find_one({"username": username})
+    if user is None:
+        raise HTTPException(status_code=403, detail="Could not validate credentials")
+    return {"username": username}
 
 ### post request
 @blog_root.post("/new/blog")
@@ -116,3 +117,5 @@ async def external_api(current_user: dict = Depends(get_current_user)):
             }
         else:
             raise HTTPException(status_code=response.status_code, detail="Error fetching data from external API")
+
+app.include_router(blog_root)
